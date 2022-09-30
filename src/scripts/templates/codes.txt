@@ -1,0 +1,10 @@
+<?php
+
+namespace {{namespace}};
+
+use Hasdemir\Base\Codes;
+
+class {{Class}}Codes extends Codes
+{
+  const NAMESPACE = '{{class}}';
+}

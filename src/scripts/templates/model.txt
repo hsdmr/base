@@ -1,0 +1,67 @@
+<?php
+
+namespace {{namespace}};
+
+use Hasdemir\Base\Crud;
+use {{sub}}\{{Class}}Pdo;
+use {{sub}}\{{Class}}Redis;
+
+class {{Class}} extends Crud
+{
+  protected ?{{Class}}Pdo $storage;
+
+  public function __construct($id = null, {{Class}}Pdo $storage = null)
+  {
+    $storage ===null ?: $this->setStorage($storage);
+    
+    if ($id !== null) {
+      $this->read($id);
+    }
+  }
+
+  public function setStorage($storage)
+  {
+    $this->storage = $storage;
+    $this->redis_storage = new {{Class}}Redis();
+  }
+
+  public function create($params)
+  {
+    {{Class}}Codes::currentJob({{Class}}Codes::JOB_CREATE);
+    try {
+
+    } finally {
+      {{Class}}Codes::endJob();
+    }
+  }
+
+  public function read($id)
+  {
+    {{Class}}Codes::currentJob({{Class}}Codes::JOB_READ);
+    try {
+
+    } finally {
+      {{Class}}Codes::endJob();
+    }
+  }
+
+  public function update($id, $params)
+  {
+    {{Class}}Codes::currentJob({{Class}}Codes::JOB_UPDATE);
+    try {
+
+    } finally {
+      {{Class}}Codes::endJob();
+    }
+  }
+
+  public function delete($id)
+  {
+    {{Class}}Codes::currentJob({{Class}}Codes::JOB_DELETE);
+    try {
+
+    } finally {
+      {{Class}}Codes::endJob();
+    }
+  }
+}

@@ -1,0 +1,27 @@
+<?php
+
+use Hasdemir\Base\System;
+
+class {{Class}}
+{
+  public function up()
+  {
+    $db = System::getPdo();
+    $timestamps = timestamps();
+
+    ${{class}} = "CREATE TABLE `{{class}}` (
+      `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+
+      {$timestamps},
+      PRIMARY KEY (`id`)) ENGINE = InnoDB;";
+    
+    $db->exec(${{class}});
+  }
+
+  public function down()
+  {
+    $db = System::getPdo();
+    ${{class}} = "DROP TABLE `{{class}}`";
+    $db->exec(${{class}});
+  }
+}

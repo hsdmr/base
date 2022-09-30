@@ -1,0 +1,10 @@
+<?php
+
+namespace {{namespace}};
+
+use Hasdemir\Base\RedisModel;
+
+class {{Class}} extends RedisModel
+{
+
+}

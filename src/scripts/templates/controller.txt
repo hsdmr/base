@@ -1,0 +1,78 @@
+<?php
+
+namespace {{namespace}};
+
+use Hasdemir\Base\Controller;
+use Hasdemir\Helper\Json;
+
+class {{Class}} extends Controller
+{
+  protected static $routes = [
+    ['GET', '/{{class}}', 'search'],
+    ['POST', '/{{class}}', 'create'],
+    ['GET', '/{{class}}/{{{class}}_id}', 'read'],
+    ['PUT', '/{{class}}/{{{class}}_id}', 'update'],
+    ['DELETE', '/{{class}}/{{{class}}_id}', 'delete'],
+  ];
+
+  public function __construct($request, $args)
+  {
+    parent::__construct($request, $args);
+  }
+
+  public function search($request, $args)
+  {
+    Codes::currentJob('{{class}}_search');
+    try {
+      $get = $request->params();
+
+    } finally {
+      Codes::endJob();
+    }
+  }
+  
+  public function create($request, $args)
+  {
+    Codes::currentJob('{{class}}_create');
+    try {
+      $post = Json::decode($request->body());
+
+
+    } finally {
+      Codes::endJob();
+    }
+  }
+  
+  public function read($request, $args)
+  {
+    Codes::currentJob('{{class}}_read');
+    try {
+      ${{class}}_id = $args['{{class}}_id'];
+
+    } finally {
+      Codes::endJob();
+    }
+  }
+  
+  public function update($request, $args)
+  {
+    Codes::currentJob('{{class}}_update');
+    try {
+      $put = Json::decode($request->body());
+
+    } finally {
+      Codes::endJob();
+    }
+  }
+  
+  public function delete($request, $args)
+  {
+    Codes::currentJob('{{class}}_delete');
+    try {
+      ${{class}}_id = $args['{{class}}_id'];
+
+    } finally {
+      Codes::endJob();
+    }
+  }
+}

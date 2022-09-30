@@ -1,0 +1,15 @@
+<?php
+
+namespace {{namespace}};
+
+use Hasdemir\Base\PdoModel;
+
+class {{Class}} extends PdoModel
+{
+  protected string $table = '{{class}}';
+  protected array $fields = [];
+  protected array $unique = [];
+  protected array $hidden = [];
+  protected array $protected = [];
+  protected bool $soft_delete = false;
+}

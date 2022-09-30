@@ -1,0 +1,44 @@
+<?php
+
+namespace {{namespace}};
+
+use Hasdemir\Base\Crud;
+use {{sub}}\{{Class}}Pdo;
+use {{sub}}\{{Class}}Redis;
+
+class {{Class}}Search extends Crud
+{
+  protected ?{{Class}}Pdo $storage;
+
+  public function __construct({{Class}}Pdo $storage = null)
+  {
+    $storage ===null ?: $this->setStorage($storage);
+  }
+
+  public function setStorage($storage)
+  {
+    $this->storage = $storage;
+    $this->redis_storage = new {{Class}}Redis();
+  }
+
+  public function init($params)
+  {
+    {{Class}}Codes::currentJob({{Class}}Codes::JOB_SEARCH);
+    try {
+      $rows = $this->storage;
+      foreach ($params ?? [] as $key => $value) {
+        $rows->where($key, $value);
+      }
+      $rows = $rows->get();
+
+      $total = $this->storage->select('COUNT(*) as total')->first()->total;
+
+      return [
+        'data' => $rows,
+        'total' => $total
+      ];
+    } finally {
+      {{Class}}Codes::endJob();
+    }
+  }
+}
