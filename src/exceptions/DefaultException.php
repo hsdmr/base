@@ -7,13 +7,10 @@ namespace Hasdemir\Base\Exception;
  */
 class DefaultException extends \Exception
 {
-  public $http_code = 500;
+  protected $http_code = 500;
 
-  public function __construct(string $message, array $info = [], $previous = null)
+  public function __construct(string $message = '', $previous = null)
   {
-    foreach ($info as $key => $value) {
-      $this->{$key} = $value;
-    }
     parent::__construct($message, $this->http_code, $previous);
   }
 }
