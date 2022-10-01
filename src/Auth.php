@@ -8,13 +8,11 @@ use PDO;
 class Auth
 {
   private $db;
-  private $header;
   private static $instance;
 
   public function __construct()
   {
     $this->db = System::getPdo();
-    $this->header = getallheaders();
   }
 
   public static function getInstance()
@@ -27,7 +25,7 @@ class Auth
 
   public function attempt($credentials)
   {
-    Log::currentJob(Codes::JOB_AUTH_ATTEMPT);
+    Codes::currentJob(Codes::JOB_AUTH_ATTEMPT);
     try {
       $key = 'username';
 
@@ -66,7 +64,7 @@ class Auth
       Session::getInstance()->set('user', $user);
       return true;
     } finally {
-      Log::endJob();
+      Codes::endJob();
     }
   }
 }
