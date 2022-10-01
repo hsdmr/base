@@ -34,7 +34,7 @@ abstract class PdoModel extends HandyClass
 
   public function __construct()
   {
-    Log::currentJob(slugify($this->table, '_') . '-model');
+    Codes::currentJob(slugify($this->table, '_') . '-model');
     $this->db = System::getPdo();
     $this->createFields();
   }
@@ -206,6 +206,8 @@ abstract class PdoModel extends HandyClass
 
         $this->collection[] = $object ?? $item;
       }
+      $this->select = [];
+      $this->special_select = [];
       return $this->collection;
     }
 
@@ -443,30 +445,30 @@ abstract class PdoModel extends HandyClass
   }
 
   /**
-   * Adds WHERE IS NULL to query.
+   * Adds WHERE IS NOT NULL to query.
    *
    * @return object $this
    *
    */
   public function WhereNotNull($key, $conjunction = 'AND'): object
   {
-    $this->whereConditions($conjunction);
-    $this->where_sql = trim($this->where_sql .= " `$key` IS NOT NULL");
-
+    if ($conjunction === 'AND') {
+      $this->where($key, 'IS', 'NOT NULL');
+    } else {
+      $this->orWhere($key, 'IS', 'NOT NULL');
+    }
     return $this;
   }
 
   /**
-   * Adds WHERE IS NULL to query.
+   * Adds WHERE IN () to query.
    *
    * @return object $this
    *
    */
   public function WhereIn($key, $keys = []): object
   {
-    $this->whereConditions('AND');
-    $this->where_sql = trim($this->where_sql .= " `$key` IN ('" . implode("', '", $keys) . "')");
-
+    $this->where($key, 'IN', "('" . implode("', '", $keys) . "')");
     return $this;
   }
 
@@ -478,9 +480,11 @@ abstract class PdoModel extends HandyClass
    */
   public function WhereNull($key, $conjunction = 'AND'): object
   {
-    $this->whereConditions($conjunction);
-    $this->where_sql = trim($this->where_sql .= " `$key` IS NULL");
-
+    if ($conjunction === 'AND') {
+      $this->where($key, 'IS', 'NULL');
+    } else {
+      $this->orWhere($key, 'IS', 'NULL');
+    }
     return $this;
   }
 
@@ -728,7 +732,6 @@ abstract class PdoModel extends HandyClass
   {
     foreach ($this->unique as $key) {
       $result = $this->select("COUNT(id) as count", $key, $this->primary_key)->where($key, $params[$key])->get();
-      $this->select = [];
       if ($this->where_key != '') {
         if ($result['count'] && $result[$this->primary_key] != $this->where_key) {
           throw new StoragePdoException("'$key' has already been registered", Codes::key(Codes::ERROR_KEY_ALREADY_REGISTERED, ['key' => $key]));
@@ -877,6 +880,6 @@ abstract class PdoModel extends HandyClass
 
   public function __destruct()
   {
-    Log::endJob();
+    Codes::endJob();
   }
 }
