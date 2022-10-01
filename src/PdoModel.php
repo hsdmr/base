@@ -93,8 +93,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model create",
-      Codes::key(Codes::ERROR_WHILE_MODEL_CREATE, ['generic' => explode('\\', getModelFromTable($this->table))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model create"
     );
   }
 
@@ -133,8 +132,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model update",
-      Codes::key(Codes::ERROR_WHILE_MODEL_UPDATE, ['generic' => explode('\\', getModelFromTable($this->table))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model update"
     );
   }
 
@@ -212,8 +210,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model get",
-      Codes::key(Codes::ERROR_WHILE_MODEL_GET, ['generic' => explode('\\', getModelFromTable($this->table))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model get"
     );
   }
 
@@ -244,8 +241,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new NotFoundException(
-      explode('\\', getModelFromTable($this->table))[2] . " not found",
-      Codes::key(Codes::ERROR_GENERIC_NOT_FOUND, ['generic' => explode('\\', getModelFromTable($this->table))[2]])
+      explode('\\', getModelFromTable($this->table))[2] . " not found"
     );
   }
 
@@ -587,8 +583,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call belongsToMany '" . explode('\\', getModelFromTable($table))[2] . "'",
-      Codes::key(Codes::ERROR_WHILE_MODEL_BELONGS_TO_MANY, ['generic' => explode('\\', getModelFromTable($this->table))[2], 'relation' => explode('\\', getModelFromTable($table))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call belongsToMany '" . explode('\\', getModelFromTable($table))[2] . "'"
     );
   }
 
@@ -616,8 +611,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call detach '" . explode('\\', getModelFromTable($this->relation))[2] . "'",
-      Codes::key(Codes::ERROR_WHILE_MODEL_DETACH, ['generic' => explode('\\', getModelFromTable($this->table))[2], 'relation' => explode('\\', getModelFromTable($this->relation))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call detach '" . explode('\\', getModelFromTable($this->relation))[2] . "'"
     );
   }
 
@@ -646,8 +640,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call detach '" . explode('\\', getModelFromTable($this->relation))[2] . "'",
-      Codes::key(Codes::ERROR_WHILE_MODEL_ATTACH, ['generic' => explode('\\', getModelFromTable($this->table))[2], 'relation' => explode('\\', getModelFromTable($this->relation))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call detach '" . explode('\\', getModelFromTable($this->relation))[2] . "'"
     );
   }
 
@@ -679,8 +672,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call belongsTo '" . explode('\\', getModelFromTable($table))[2] . "'",
-      Codes::key(Codes::ERROR_WHILE_MODEL_BELONGS_TO, ['generic' => explode('\\', getModelFromTable($this->table))[2], 'relation' => explode('\\', getModelFromTable($table))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call belongsTo '" . explode('\\', getModelFromTable($table))[2] . "'"
     );
   }
 
@@ -715,8 +707,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call hasMany '" . explode('\\', getModelFromTable($table))[2] . "'",
-      Codes::key(Codes::ERROR_WHILE_MODEL_HAS_MANY, ['generic' => explode('\\', getModelFromTable($this->table))[2], 'relation' => explode('\\', getModelFromTable($table))[2]])
+      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call hasMany '" . explode('\\', getModelFromTable($table))[2] . "'"
     );
   }
 
@@ -734,10 +725,10 @@ abstract class PdoModel extends HandyClass
       $result = $this->select("COUNT(id) as count", $key, $this->primary_key)->where($key, $params[$key])->get();
       if ($this->where_key != '') {
         if ($result['count'] && $result[$this->primary_key] != $this->where_key) {
-          throw new StoragePdoException("'$key' has already been registered", Codes::key(Codes::ERROR_KEY_ALREADY_REGISTERED, ['key' => $key]));
+          throw new StoragePdoException("'$key' has already been registered");
         }
       } else if ($result['count']) {
-        throw new StoragePdoException("'$key' has already been registered", Codes::key(Codes::ERROR_KEY_ALREADY_REGISTERED, ['key' => $key]));
+        throw new StoragePdoException("'$key' has already been registered");
       }
     }
   }

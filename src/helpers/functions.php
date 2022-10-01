@@ -76,7 +76,7 @@ if (!function_exists('view')) {
 if (!function_exists('asset')) {
   function asset($path = ''): void
   {
-    echo $_ENV['APP_URL'] . '/' . $path;
+    echo APP_URL . '/' . $path;
   }
 }
 
