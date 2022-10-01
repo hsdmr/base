@@ -6,11 +6,14 @@ class Response
 {
   public static function error($http_code, $header, $message = null, $e = null, $th = null)
   {
-    $response = [
-      'message' => $message,
-      'key' => $e->key ?? Codes::ERROR_UNKNOWN,
-      'vars' => $e->vars ?? [],
-    ];
+    $response = null;
+
+    if ($message) {
+      $response = [
+        'message' => $message,
+      ];
+    }
+
     Log::error($response, $e, $th);
     return self::emit($http_code, $header, $response);
   }
