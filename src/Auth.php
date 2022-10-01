@@ -46,19 +46,19 @@ class Auth
       if (!$user) {
         switch ($key) {
           case 'username':
-            throw new AuthenticationException("'username' is wrong", Codes::key(Codes::ERROR_USERNAME_IS_WRONG));
+            throw new AuthenticationException(Codes::ERROR_USERNAME_IS_WRONG);
 
           case 'email':
-            throw new AuthenticationException("'email' is wrong", Codes::key(Codes::ERROR_EMAIL_IS_WRONG));
+            throw new AuthenticationException(Codes::ERROR_EMAIL_IS_WRONG);
         }
       }
 
       if ($user['deleted_at'] != null) {
-        throw new AuthenticationException("This user deleted", Codes::key(Codes::ERROR_USER_DELETED));
+        throw new AuthenticationException(Codes::ERROR_USER_DELETED);
       }
 
       if (!password_verify($_POST['password'], $user['password'])) {
-        throw new AuthenticationException("'password' is incorrect", Codes::key(Codes::ERROR_PASSWORD_IS_INCORRECT));
+        throw new AuthenticationException(Codes::ERROR_PASSWORD_IS_INCORRECT);
       }
 
       Session::getInstance()->set('user', $user);

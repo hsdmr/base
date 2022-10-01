@@ -5,8 +5,6 @@ namespace Hasdemir\Base;
 class Log
 {
   const LOG_DIR = ROOT . DS . 'logs';
-  private static array $currentJob = [];
-  private static int $code = 0;
 
   private static function insert($log, $type, $date = true)
   {

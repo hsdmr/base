@@ -59,7 +59,7 @@ class Route
 
     if (!$this->request->isValid()) {
       if ($this->isApi()) {
-        throw new ForbiddenException('Url does not valid', Codes::key(Codes::ERROR_URL_NOT_VALID));
+        throw new ForbiddenException(Codes::ERROR_URL_NOT_VALID);
       } else {
         include_once 'html/403.php';
       }
@@ -74,7 +74,7 @@ class Route
   {
     if (self::$hasRoute === false) {
       if ($is_api) {
-        throw new NotFoundException('Url does not exists', Codes::key(Codes::ERROR_GENERIC_NOT_FOUND, ['generic' => 'Url']));
+        throw new NotFoundException(Codes::ERROR_URL_NOT_FOUND);
       } else {
         include_once 'html/404.php';
       }
@@ -113,7 +113,7 @@ class Route
             call_user_func_array([new $class($this->request, $this->prepareArgs($matches)), $function], [$this->request, $this->prepareArgs($matches)]);
           }
           if (!$GLOBALS[Codes::IS_ROUTE_CALLED] && $this->isApi()) {
-            throw new NotImplementException('Called function not implemented', Codes::key(Codes::ERROR_CALLED_FUNCTION_NOT_IMPLEMENTED));
+            throw new NotImplementException(Codes::ERROR_CALLED_FUNCTION_NOT_IMPLEMENTED);
           }
           if (!$GLOBALS[Codes::IS_ROUTE_CALLED] && !$this->isApi()) {
             include_once 'html/404.php';

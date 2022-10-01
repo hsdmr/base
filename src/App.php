@@ -106,6 +106,8 @@ class App
     define('MYSQL_PASSWORD', $config['MYSQL_PASSWORD'] ?? '');
 
     define('APP_NAME', $config['APP_NAME'] ?? 'App');
+    define('APP_ENV', $config['APP_ENV'] ?? 'dev');
+    define('APP_URL', $config['APP_URL'] ?? 'http://localhost:8000');
     define('API_PREFIX', $config['API_PREFIX'] ?? '/api');
     define('VERSION', $config['VERSION'] ?? '0.1.0');
     define('MODEL_FOLDER', $config['MODEL_FOLDER'] ?? 'model');
