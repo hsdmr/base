@@ -42,25 +42,6 @@ class Log
     self::insert($log, 'daily');
   }
 
-  public static function currentJob($job)
-  {
-    $code = ++self::$code;
-    self::$currentJob[] = [
-      'job' => $job,
-      'code' => $code
-    ];
-    $log = '[' . date('Y-m-d H:i:s') . '] Start Job => \'' . ($job) . '\' [=== ' . ($code) . ' ===]' . PHP_EOL;
-    self::insert($log, 'daily');
-  }
-
-  public static function endJob($job = null)
-  {
-    $job = $job ?? self::$currentJob[array_key_last(self::$currentJob)];
-    unset(self::$currentJob[array_key_last(self::$currentJob)]);
-    $log = '[' . date('Y-m-d H:i:s') . '] End Job => \'' . ($job['job']) . '\' [=== ' . ($job['code']) . ' ===]' . PHP_EOL;
-    self::insert($log, 'daily');
-  }
-
   public static function request($url, $method)
   {
     $log = '[' . date('Y-m-d H:i:s') . '] Request url => \'' . $url . '\', method => \'' . $method . '\'' . PHP_EOL;

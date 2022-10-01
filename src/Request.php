@@ -33,6 +33,17 @@ class Request
     return strtoupper($_SERVER['REQUEST_METHOD']);
   }
 
+  public function headers($header = '')
+  {
+    $headers = getallheaders();
+
+    if ($header) {
+      return $headers[$header];
+    }
+
+    return $headers;
+  }
+
   public function body()
   {
     $body = [];

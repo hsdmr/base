@@ -7,10 +7,10 @@ namespace Hasdemir\Base\Exception;
  */
 class UnexpectedValueException extends DefaultException
 {
-  public $http_code = 406;
+  protected $http_code = 406;
 
-  public function __construct(string $message, array $info = [], $previous = null)
+  public function __construct(string $message = '', $previous = null)
   {
-    parent::__construct($message, $info, $previous);
+    parent::__construct($message, $previous);
   }
 }

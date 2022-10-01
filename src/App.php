@@ -15,7 +15,6 @@ class App
 {
   protected array $config;
   protected array $header = [];
-  public Request $request;
   public Response $response;
   public Console $consol;
   public Route $route;
