@@ -90,11 +90,11 @@ class Route
     return false;
   }
 
-  public function handle(string $class_suffix = 'Controller')
+  public function handle()
   {
     foreach ($this->routes as $key => $value) {
       foreach ($value as $route) {
-        $class = $key . $class_suffix;
+        $class = $key;
         if (!class_exists($class)) {
           $class = getControllerNamespace() . $class;
         }
