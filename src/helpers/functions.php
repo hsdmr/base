@@ -69,7 +69,7 @@ if (!function_exists('view')) {
     foreach ($data as $key => $value) {
       ${$key} = $value;
     }
-    $view_location = ROOT . DS . 'views' . DS . $view . '.' . $extension;
+    $view_location = ROOT . DS . 'resources' . DS . $view . '.' . $extension;
     return include_once $view_location;
   }
 }
