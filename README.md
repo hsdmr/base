@@ -1,3 +1,1 @@
-# Base framework
-
-Minimum stable version of lightweight mvc framework
+# Base library for Hasdemir Framework
