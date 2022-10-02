@@ -9,6 +9,7 @@ use {{sub}}\{{Class}}Redis;
 class {{Class}} extends Crud
 {
   protected ?{{Class}}Pdo $storage;
+  protected ?{{Class}}Redis $redis_storage;
 
   public function __construct($id = null, {{Class}}Pdo $storage = null)
   {
