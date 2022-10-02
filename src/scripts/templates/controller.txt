@@ -2,7 +2,6 @@
 
 namespace {{namespace}};
 
-use Hasdemir\Base\Controller;
 use Hasdemir\Helper\Json;
 
 class {{Class}} extends Controller

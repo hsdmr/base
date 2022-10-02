@@ -31,7 +31,7 @@ class App
   public function add($class, $isApi = true)
   {
     if (!class_exists($class)) {
-      $class = classify(APP_NAME) . "\\" . classify(CONTROLLER_FOLDER) . "\\" . $class . classify(CONTROLLER_FOLDER);
+      $class = classify(APP_NAME) . "\\" . classify(CONTROLLER_FOLDER) . "\\" . $class;
     }
 
     if (!method_exists($class, "routes")) {
