@@ -31,7 +31,7 @@ class App
   public function add($class, $isApi = true)
   {
     if (!class_exists($class)) {
-      $class = strtoupper(APP_NAME) . "\\" . strtoupper(CONTROLLER_FOLDER) . "\\" . $class;
+      $class = classify(APP_NAME) . "\\" . classify(CONTROLLER_FOLDER) . "\\" . $class . classify(CONTROLLER_FOLDER);
     }
 
     if (!method_exists($class, "routes")) {
@@ -111,7 +111,7 @@ class App
     define('API_PREFIX', $config['API_PREFIX'] ?? '/api');
     define('VERSION', $config['VERSION'] ?? '0.1.0');
     define('MODEL_FOLDER', $config['MODEL_FOLDER'] ?? 'model');
-    define('MODEL_SUB_FOLDER', $config['MODEL_SUB_FOLDER'] ?? '');
+    define('MODEL_SUB_FOLDER', $config['MODEL_SUB_FOLDER'] ?? 'storage');
     define('CONTROLLER_FOLDER', $config['CONTROLLER_FOLDER'] ?? 'controller');
   }
 }
