@@ -33,7 +33,7 @@ class Template
 
   public static function makeController($name)
   {
-    $file = self::$path . CONTROLLER_FOLDER . DS . ucfirst($name) . 'Controller.php';
+    $file = self::$path . CONTROLLER_FOLDER . DS . ucfirst($name) . '.php';
     $content = str_replace([
       '{{namespace}}',
       '{{class}}',
@@ -42,7 +42,7 @@ class Template
     ], [
       getControllerNamespace(),
       $name,
-      classify($name) . 'Controller',
+      classify($name),
       strtoupper(classify($name)),
     ], file_get_contents(__DIR__ . '/templates/controller.txt'));
     $controller = fopen($file, 'x');
