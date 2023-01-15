@@ -4,7 +4,27 @@ namespace Hasdemir\Base;
 
 class Log
 {
+  protected static array $context = [];
+  protected static string $message = '';
+  protected static string $status = 'success';
+  protected static array $error = [];
+
   const LOG_DIR = ROOT . DS . 'logs';
+
+  public static function body()
+  {
+    return [
+      'message' => self::$message,
+      'context' => self::$context,
+      'status' => self::$status,
+      'error' => self::$error
+    ];
+  }
+
+  public static function setContext(array $data)
+  {
+    self::$context = $data;
+  }
 
   private static function insert($log, $type, $date = true)
   {
@@ -36,7 +56,8 @@ class Log
   public static function endApp()
   {
     self::sql();
-    $log = '-------------------- App Ended At => ' . date('Y-m-d H:i:s') .  ' ----------------------' . PHP_EOL . '[seperator]' . PHP_EOL;
+    $execute_time = ((hrtime(true) - APP_START) / 1000000);
+    $log = '-------------------- App Ended At => ' . date('Y-m-d H:i:s') .  ' ---------------------- Total Execute Time => ' . $execute_time . ' ms' . PHP_EOL . '[seperator]' . PHP_EOL;
     self::insert($log, 'daily');
   }
 
@@ -48,6 +69,14 @@ class Log
 
   public static function error($response, $e, $th)
   {
+    self::$error = [
+      'message' => $response['message'],
+      'th_message' => $e->getMessage(),
+      'file' => $e->getFile(),
+      'line' => $e->getLine()
+    ];
+    self::$status = 'error';
+    
     $log = '[' . date('Y-m-d H:i:s') . '] Throwed error. Message => "' . $response['message'] . '", Status Code => \'' . (isset($e->http_code) ? $e->http_code : 500) . '\'' . PHP_EOL;
     self::insert($log, 'daily');
 
