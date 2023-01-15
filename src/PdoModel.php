@@ -8,33 +8,33 @@ use PDO;
 
 abstract class PdoModel extends HandyClass
 {
-  private string $primary_key = 'id';
-  private PDO $db;
+  protected string $primary_key = 'id';
+  protected PDO $db;
   protected string $table;
+  protected string $relation;
+  protected string $relation_table;
   protected array $fields = [];
   protected array $unique = [];
   protected array $hidden = [];
   protected array $protected = [];
   protected bool $soft_delete = false;
-  private string $relation;
-  private string $relation_table;
-  private bool $with_hidden = false;
-  private bool $with_deleted = false;
-  private bool $only_deleted = false;
+  protected bool $with_hidden = false;
+  protected bool $with_deleted = false;
+  protected bool $only_deleted = false;
 
-  private array $select = [];
-  private array $special_select = [];
-  private string $where_sql = '';
-  private array $where_params = [];
-  private $where_key;
-  private string $order = '';
-  private string $limit = '';
-  private array $with = [];
-  private array $collection = [];
+  protected array $select = [];
+  protected array $special_select = [];
+  protected string $where_sql = '';
+  protected array $where_params = [];
+  protected $where_key;
+  protected string $order = '';
+  protected string $limit = '';
+  protected array $with = [];
+  protected array $collection = [];
 
   public function __construct()
   {
-    Codes::currentJob(slugify($this->table, '_') . '-model');
+    Codes::currentJob($this->table . '-pdo');
     $this->db = System::getPdo();
     $this->createFields();
   }
@@ -73,27 +73,28 @@ abstract class PdoModel extends HandyClass
       $fields[$key] = $params[$key] ?? null;
     }
     $obj_fields = $this->fields;
-    array_shift($fields);
-    array_shift($obj_fields);
+    //array_shift($fields);
+    //array_shift($obj_fields);
     $binds = array_map(fn ($attr) => ":$attr", array_keys($fields));
     $sql = "INSERT INTO `$this->table` (`" . implode("`, `", $obj_fields) . "`) VALUES (" . implode(", ", $binds) . ")";
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     foreach ($fields as $key => $value) {
       $statement->bindValue(":$key", $value);
       $binds[$key] = $value;
     }
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
     if ($statement->execute()) {
-      $fields[$this->primary_key] = $this->db->lastInsertId();
+      if (!isset($fields[$this->primary_key])) {
+        $fields[$this->primary_key] = $this->db->lastInsertId();
+      }
       return $this->prepareFields($fields);
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model create"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model create"
     );
   }
 
@@ -113,6 +114,8 @@ abstract class PdoModel extends HandyClass
       $binds[] = '`' . $key . '` = :' . $key;
     }
     $sql = "UPDATE `$this->table` SET " . implode(', ', $binds) . " WHERE " . $this->primary_key . " = :" . $this->primary_key;
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     foreach ($params as $key => $value) {
@@ -121,10 +124,7 @@ abstract class PdoModel extends HandyClass
     }
     $statement->bindValue(":" . $this->primary_key, $this->where_key);
     $binds[$this->primary_key] = $this->where_key;
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
 
     if ($statement->execute()) {
       $params[$this->primary_key] = $this->where_key;
@@ -132,7 +132,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model update"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model update"
     );
   }
 
@@ -173,18 +173,18 @@ abstract class PdoModel extends HandyClass
     if ($this->soft_delete && $this->only_deleted && !$this->with_deleted) {
       $sql .= ($this->where_sql === '' ? "WHERE" : " AND") . " `deleted_at` IS NOT NULL";
     }
-
+    $sql = rtrim($sql, ' AND');
+    $sql = rtrim($sql, ' OR');
     $sql .= $this->order . $this->limit;
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
-    foreach ($this->where_params as $item) {
-      $statement->bindValue(":" . $item[0], $item[2]);
-      $binds[$item[0]] = $item[2];
+    foreach ($this->where_params as $key => $value) {
+      $statement->bindValue(":" . $key, $value[1]);
+      $binds[$key] = $value[1];
     }
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
 
     if ($statement->execute()) {
       $items = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -194,7 +194,7 @@ abstract class PdoModel extends HandyClass
         if (count(array_diff(array_keys($item), $this->fields)) === 0) {
           $object = $this->newModel($this->table, $item, $this->with_deleted, $this->only_deleted, $this->with_hidden, $this->select);
           foreach ($this->with as $with) {
-            $object->{$with} = $object->{$with}()->{$with}->toArray();
+            $object->{$with} = $object->{$with}()->{$with};
           }
         }
 
@@ -204,13 +204,11 @@ abstract class PdoModel extends HandyClass
 
         $this->collection[] = $object ?? $item;
       }
-      $this->select = [];
-      $this->special_select = [];
       return $this->collection;
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model get"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model get"
     );
   }
 
@@ -222,18 +220,17 @@ abstract class PdoModel extends HandyClass
    *
    * @throws NotFoundException
    */
-  public function findByPrimaryKey(int $primary_key)
+  public function findByPrimaryKey(string $primary_key)
   {
     $this->where_key = $primary_key;
     $sql = "SELECT " . $this->createValidSelect() . " FROM `$this->table` WHERE `" . $this->primary_key . "` = :" . $this->primary_key;
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     $statement->bindValue(":" . $this->primary_key, $this->where_key);
     $binds[$this->primary_key] = $this->where_key;
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
 
     if ($statement->execute()) {
       $item = $statement->fetch(PDO::FETCH_ASSOC);
@@ -241,7 +238,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new NotFoundException(
-      explode('\\', getModelFromTable($this->table))[2] . " not found"
+      getModelNameFromTable($this->table) . " not found"
     );
   }
 
@@ -266,14 +263,17 @@ abstract class PdoModel extends HandyClass
   {
     if ($this->soft_delete) {
       $sql = "UPDATE `$this->table` SET `deleted_at` = :deleted_at WHERE `" . $this->primary_key . "` = :" . $this->primary_key;
+      $uniqid = uniqid();
+      $GLOBALS[Codes::SQL_QUERIES][$uniqid] = [
+        Codes::QUERY => $sql
+      ];
       $statement = $this->db->prepare($sql);
       $binds = [];
       $statement->bindValue(":$this->primary_key", $this->where_key);
       $binds[$this->primary_key] = $this->where_key;
       $statement->bindValue(":deleted_at", time());
       $binds['deleted_at'] = time();
-      $GLOBALS[Codes::SQL_QUERIES][] = [
-        Codes::QUERY => $sql,
+      $GLOBALS[Codes::SQL_QUERIES][$uniqid] = [
         Codes::BINDS => $binds
       ];
       if ($statement->execute()) {
@@ -293,14 +293,13 @@ abstract class PdoModel extends HandyClass
   public function forceDelete(): bool
   {
     $sql = "DELETE FROM `$this->table` WHERE `" . $this->primary_key . "` = :" . $this->primary_key;
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     $statement->bindValue(":$this->primary_key", $this->where_key);
     $binds[$this->primary_key] = $this->where_key;
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
     if ($statement->execute()) {
       return true;
     };
@@ -366,6 +365,10 @@ abstract class PdoModel extends HandyClass
   public function select(): object
   {
     $this->select = func_get_args() ?? [];
+    if ($this->select[0] === '*') {
+      $this->select = [];
+    }
+    $this->special_select = [];
     for ($i = 0; $i < count($this->select); $i++) {
       if (str_contains(strtolower($this->select[$i]), '(')) {
         $this->special_select[] = strtolower($this->select[$i]);
@@ -375,7 +378,7 @@ abstract class PdoModel extends HandyClass
     return $this;
   }
 
-  private function whereConditions($key): void
+  protected function whereConditions($key): void
   {
     if ($this->where_sql === '') {
       $this->where_sql .= ' WHERE';
@@ -385,6 +388,7 @@ abstract class PdoModel extends HandyClass
       $this->where_sql .= " $key";
     }
   }
+
   /**
    * Adds where query with and.
    *
@@ -406,8 +410,18 @@ abstract class PdoModel extends HandyClass
       $value = $where[2];
     }
 
-    $this->where_params[] = [$key, $operator, $value];
-    $this->where_sql = trim($this->where_sql .= " `$key` $operator :$key");
+    if (!isset($this->where_params[$key])) {
+      if ($operator === 'IN') {
+        $this->where_sql = trim($this->where_sql .= " `$key` $operator ($value)");
+      } else {
+        $this->where_sql = trim($this->where_sql .= " `$key` $operator :$key");
+      }
+    } else {
+      $this->where_sql = trim($this->where_sql, ' AND');
+    }
+    if ($operator !== 'IN') {
+      $this->where_params[$key] = [$operator, $value];
+    }
 
     return $this;
   }
@@ -434,8 +448,12 @@ abstract class PdoModel extends HandyClass
       $value = $where[2];
     }
 
-    $this->where_params[] = [$key, $operator, $value];
-    $this->where_sql = trim($this->where_sql .= " `$key` $operator :$key");
+    if (!isset($this->where_params[$key])) {
+      $this->where_sql = trim($this->where_sql .= " `$key` $operator :$key");
+    } else {
+      $this->where_sql = trim($this->where_sql, ' OR');
+    }
+    $this->where_params[$key] = [$operator, $value];
 
     return $this;
   }
@@ -457,14 +475,15 @@ abstract class PdoModel extends HandyClass
   }
 
   /**
-   * Adds WHERE IN () to query.
+   * Adds WHERE IN to query.
    *
    * @return object $this
    *
    */
-  public function WhereIn($key, $keys = []): object
+  public function whereIn($key, $keys = []): object
   {
-    $this->where($key, 'IN', "('" . implode("', '", $keys) . "')");
+    $keys_string = implode("', '", $keys);
+    $this->where($key, 'IN', "'{$keys_string}'");
     return $this;
   }
 
@@ -474,7 +493,7 @@ abstract class PdoModel extends HandyClass
    * @return object $this
    *
    */
-  public function WhereNull($key, $conjunction = 'AND'): object
+  public function whereNull($key, $conjunction = 'AND'): object
   {
     if ($conjunction === 'AND') {
       $this->where($key, 'IS', 'NULL');
@@ -563,14 +582,13 @@ abstract class PdoModel extends HandyClass
     $sql = "SELECT * FROM `" . $this->relation . "` INNER JOIN `" .
       $this->relation_table . "` ON " . $this->relation_table . "." . $this->relation . "_id=" . $this->relation . ".id WHERE " .
       $this->relation_table . "." . $this->table . "_id=:" . $this->table;
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     $statement->bindValue(":" . $this->table, $this->where_key);
     $binds[$this->table . "_id"] = $this->where_key;
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
     if ($statement->execute()) {
       $items = $statement->fetchAll(PDO::FETCH_ASSOC);
       $this->{$method} = [];
@@ -583,7 +601,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call belongsToMany '" . explode('\\', getModelFromTable($table))[2] . "'"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model call belongsToMany '" . getModelNameFromTable($table) . "'"
     );
   }
 
@@ -596,14 +614,13 @@ abstract class PdoModel extends HandyClass
   public function detach(): object
   {
     $sql = "DELETE FROM `" . $this->relation_table . "` WHERE `" . $this->table . "_id` = :id";
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     $statement->bindValue(":id", $this->where_key);
     $binds[$this->primary_key] = $this->where_key;
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
 
     if ($statement->execute()) {
       $this->offsetUnset($this->relation);
@@ -611,7 +628,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call detach '" . explode('\\', getModelFromTable($this->relation))[2] . "'"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model call detach '" . getModelNameFromTable($this->relation) . "'"
     );
   }
 
@@ -624,23 +641,22 @@ abstract class PdoModel extends HandyClass
   public function attach($id): object
   {
     $sql = "INSERT INTO `" . $this->relation_table . "` (`" . $this->table . "_id`, `" . $this->relation . "_id`) VALUES (:id, :" . $this->relation . "_id)";
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     $statement->bindValue(":" . $this->relation . "_id", $id);
     $statement->bindValue(":id", $this->where_key);
     $binds[$this->primary_key] = $this->where_key;
     $binds[$this->relation . "_id"] = $id;
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
 
     if ($statement->execute()) {
       return $this;
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call detach '" . explode('\\', getModelFromTable($this->relation))[2] . "'"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model call detach '" . getModelNameFromTable($this->relation) . "'"
     );
   }
 
@@ -655,24 +671,27 @@ abstract class PdoModel extends HandyClass
   {
     $method = getCallingMethodName();
     $sql = "SELECT * FROM `" . $table . "` WHERE `id` = :id LIMIT 1";
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     $statement->bindValue(":id", $this->{$table . '_id'});
     $binds[$this->primary_key] = $this->{$table . '_id'};
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
 
     if ($statement->execute()) {
       $item = $statement->fetch(PDO::FETCH_ASSOC);
-      $this->{$method} = $this->newModel($table, $item);
+      if ($item) {
+        $this->{$method} = $this->newModel($table, $item);
+      } else {
+        $this->{$method} = [];
+      }
       $this->offsetSet($method, $this->{$method});
       return $this;
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call belongsTo '" . explode('\\', getModelFromTable($table))[2] . "'"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model call belongsTo '" . getModelNameFromTable($table) . "'"
     );
   }
 
@@ -687,14 +706,13 @@ abstract class PdoModel extends HandyClass
   {
     $method = getCallingMethodName();
     $sql = "SELECT * FROM `" . $table . "` WHERE `" . $this->table . "_id` = :id";
+    $uniqid = uniqid();
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::QUERY] = $sql;
     $statement = $this->db->prepare($sql);
     $binds = [];
     $statement->bindValue(":id", $this->where_key);
     $binds[$this->table . "_id"] = $this->where_key;
-    $GLOBALS[Codes::SQL_QUERIES][] = [
-      Codes::QUERY => $sql,
-      Codes::BINDS => $binds
-    ];
+    $GLOBALS[Codes::SQL_QUERIES][$uniqid][Codes::BINDS] = $binds;
     if ($statement->execute()) {
       $items = $statement->fetchAll(PDO::FETCH_ASSOC);
       $this->{$method} = [];
@@ -707,7 +725,7 @@ abstract class PdoModel extends HandyClass
     }
 
     throw new StoragePdoException(
-      "An unknown error has occurred while '" . explode('\\', getModelFromTable($this->table))[2] . "' model call hasMany '" . explode('\\', getModelFromTable($table))[2] . "'"
+      "An unknown error has occurred while '" . getModelNameFromTable($this->table) . "' model call hasMany '" . getModelNameFromTable($table) . "'"
     );
   }
 
@@ -719,16 +737,19 @@ abstract class PdoModel extends HandyClass
    *
    * @throws StoragePdoException
    */
-  private function checkHasUniqueItem($params): void
+  protected function checkHasUniqueItem($params): void
   {
     foreach ($this->unique as $key) {
       $result = $this->select("COUNT(id) as count", $key, $this->primary_key)->where($key, $params[$key])->get();
+      $this->select = [];
+      $this->special_select = [];
+      $key = implode(' ', array_map(fn ($item) => ucfirst($item), array_values(explode('_', $key))));
       if ($this->where_key != '') {
         if ($result['count'] && $result[$this->primary_key] != $this->where_key) {
-          throw new StoragePdoException("'$key' has already been registered");
+          throw new StoragePdoException("$key has already been registered");
         }
       } else if ($result['count']) {
-        throw new StoragePdoException("'$key' has already been registered");
+        throw new StoragePdoException("$key has already been registered");
       }
     }
   }
@@ -740,7 +761,7 @@ abstract class PdoModel extends HandyClass
    * @return void
    *
    */
-  private function timestamps(&$params, $type = 'create'): void
+  protected function timestamps(&$params, $type = 'create'): void
   {
     if ($type === 'create') {
       $params['updated_at'] = time();
@@ -765,17 +786,15 @@ abstract class PdoModel extends HandyClass
    * @return void
    *
    */
-  private function createFields(): void
+  protected function createFields(): void
   {
-    if (empty($this->fields)) {
-      $sql = "DESCRIBE $this->table";
-      $statement = $this->db->prepare($sql);
-      $statement->execute();
+    $sql = "DESCRIBE $this->table";
+    $statement = $this->db->prepare($sql);
+    $statement->execute();
 
-      foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $item) {
-        $this->fields[] = $item['Field'];
-        $this->{$item['Field']} = '';
-      }
+    foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $item) {
+      $this->fields[] = $item['Field'];
+      $this->{$item['Field']} = null;
     }
   }
 
@@ -785,15 +804,15 @@ abstract class PdoModel extends HandyClass
    * @return string
    *
    */
-  private function createValidSelect(): string
+  protected function createValidSelect(): string
   {
-    if ($this->select == [] && $this->special_select == []) {
+    if ($this->select === [] && $this->special_select === []) {
       return '`' . trim(implode('`, `', array_diff($this->fields, $this->protected))) . '`';
     }
-    if ($this->special_select == []) {
+    if ($this->special_select === []) {
       return '`' . trim(implode('`, `', array_diff($this->select, $this->protected))) . '`';
     }
-    if ($this->select == []) {
+    if ($this->select === []) {
       return trim(implode(', ', $this->special_select));
     }
     return trim(implode(', ', $this->special_select)) . ', `' . trim(implode('`, `', array_diff($this->select, $this->protected))) . '`';
@@ -808,6 +827,17 @@ abstract class PdoModel extends HandyClass
   public function toArray(): array
   {
     return $this->container;
+  }
+
+  /**
+   * Returns fields in array format.
+   *
+   * @return array
+   *
+   */
+  public function getFields(): array
+  {
+    return $this->fields;
   }
 
   public function newModel(string $table, array $attributes, $with_deleted = null, $only_deleted = null, $with_hidden = null, $select = null): object
@@ -829,17 +859,16 @@ abstract class PdoModel extends HandyClass
     return $model->prepareFields($attributes);
   }
 
-  private function prepareFields($item): object
+  protected function prepareFields($item): object
   {
 
     if (!empty($this->special_select)) {
       foreach ($item as $key => $value) {
-        $this->{$key} = $value ?? '';
+        $this->{$key} = $value;
       }
     } else {
       foreach ($this->fields as $field) {
-        $item[$field] = $item[$field] ?? '';
-        $this->{$field} = $item[$field];
+        $this->{$field} = $item[$field] ?? null;
       }
 
       if (isset($item[$this->primary_key])) {
@@ -867,6 +896,19 @@ abstract class PdoModel extends HandyClass
     }
 
     return $this->setContainer($item);
+  }
+
+  /**
+   *  For set where_key
+   *
+   * @param string $id
+   * @return object
+   *
+   */
+  public function setWhereKey($id): object
+  {
+    $this->where_key = $id;
+    return $this;
   }
 
   public function __destruct()
