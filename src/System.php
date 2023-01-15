@@ -2,7 +2,6 @@
 
 namespace Hasdemir\Base;
 
-use Dotenv\Dotenv;
 use PDO;
 use stdClass;
 
