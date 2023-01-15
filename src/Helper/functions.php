@@ -1,6 +1,15 @@
 <?php
 
 use Hasdemir\Base\Route;
+use Respect\Validation\Validator as v;
+use Hasdemir\Helper\Json;
+
+const LOG_SENSITIVE_FIELDS = [
+  'password',
+  'current_password',
+  'old_password',
+  'new_password',
+];
 
 if (!function_exists('randomString')) {
   function randomString(int $length = 60): string
@@ -11,6 +20,13 @@ if (!function_exists('randomString')) {
       $random_string .= $characters[rand(0, strlen($characters) - 1)];
     }
     return $random_string;
+  }
+}
+
+if (!function_exists('getModelNameFromTable')) {
+  function getModelNameFromTable($table): string
+  {
+    return explode('\\', getModelFromTable($table))[3];
   }
 }
 
@@ -140,6 +156,17 @@ if (!function_exists('getCallingMethodName')) {
   }
 }
 
+if (!function_exists('rrmdir')) {
+  function rrmdir($dir): bool
+  {
+    $files = array_diff(scandir($dir), array('.', '..'));
+    foreach ($files as $file) {
+      (is_dir("$dir/$file")) ? rrmdir("$dir/$file") : unlink("$dir/$file");
+    }
+    return rmdir($dir);
+  }
+}
+
 if (!function_exists('echoLog')) {
   function echoLog($message1 = '', $status = '', $message2 = '')
   {
@@ -174,5 +201,50 @@ if (!function_exists('echoLog')) {
         break;
     }
     echo PHP_EOL . $code . /*"[" . date("Y-m-d H:i:s") . "]*/ "$message1 \033[0m" . $message2;
+  }
+}
+
+if (!function_exists('logMask')) {
+  function logMask($data): mixed
+  {
+    if (v::arrayType()->validate($data)) {
+      foreach ($data as $key => &$value) {
+        if (v::arrayType()->validate($value)) {
+          $value = logMask($value);
+        }
+        if (v::in(['authorization'])->validate(strtolower($key))) {
+          if (v::arrayType()->validate($value)) {
+            continue;
+          }
+          if (stristr($value, 'bearer')) {
+            $exp = explode(' ', $value, 2);
+            $len = mb_strlen($exp[1]);
+            if ($len < 10) {
+              $exp[1] = str_repeat('*', $len);
+            } else {
+              $exp[1] = mb_substr($exp[1], 0, 10) . str_repeat('*', $len - 10);
+            }
+            $value = $exp[0] . ' ' . $exp[1];
+          } else {
+            $len = mb_strlen($value);
+            if ($len < 10) {
+              $value = str_repeat('*', $len);
+            } else {
+              $value = mb_substr($value, 0, 10) . str_repeat('*', $len - 10);
+            }
+          }
+        } elseif (v::in(LOG_SENSITIVE_FIELDS)->validate(strtolower($key))) {
+          $value = str_repeat('*', 5);
+        }
+      }
+    } elseif (v::stringType()->notEmpty()->validate($data)) {
+      try {
+        $data = logMask(Json::decode($data));
+      } catch (\Throwable) {
+        //do nothing
+      }
+    }
+
+    return $data;
   }
 }
