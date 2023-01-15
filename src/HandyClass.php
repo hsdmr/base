@@ -5,8 +5,9 @@ namespace Hasdemir\Base;
 use ArrayAccess;
 use Countable;
 use Iterator;
+use stdClass;
 
-abstract class HandyClass implements ArrayAccess, Iterator, Countable
+abstract class HandyClass extends stdClass implements ArrayAccess, Iterator, Countable
 {
 
   protected array $container = [];
