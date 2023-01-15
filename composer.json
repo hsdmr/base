@@ -13,7 +13,10 @@
   ],
   "minimum-stability": "stable",
   "require": {
-    "php": "^8.1.4"
+    "php": "^8.2",
+    "aws/aws-sdk-php": "^3.245",
+    "sinergi/browser-detector": "^6.1",
+    "phpseclib/phpseclib": "~3.0"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5"
@@ -23,10 +26,7 @@
       "src/helpers/functions.php"
     ],
     "psr-4": {
-      "Hasdemir\\Base\\": "src/",
-      "Hasdemir\\Base\\Exception\\": "src/exceptions",
-      "Hasdemir\\Base\\Helper\\": "src/helpers",
-      "Hasdemir\\Base\\Script\\": "src/scripts"
+      "Hasdemir\\Base\\": "src/"
     }
   }
 }
