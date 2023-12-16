@@ -30,6 +30,13 @@ if (!function_exists('getModelFromTable')) {
   }
 }
 
+if (!function_exists('getModelNameFromTable')) {
+  function getModelNameFromTable($table): string
+  {
+    return explode('\\', getModelFromTable($table))[2];
+  }
+}
+
 if (!function_exists('getModelNamespace')) {
   function getModelNamespace($name = '', $storage = false): string
   {
@@ -173,6 +180,18 @@ if (!function_exists('echoLog')) {
         $code = "\033[0m";
         break;
     }
-    echo PHP_EOL . $code . /*"[" . date("Y-m-d H:i:s") . "]*/ "$message1 \033[0m" . $message2;
+    $echo = PHP_EOL . "\033[3" . $code . "[" . date("Y-m-d H:i:s") . "] $message1 \033[0m" . $message2;
+    echo $echo;
+  }
+}
+
+if (!function_exists('rrmdir')) {
+  function rrmdir($dir): bool
+  {
+    $files = array_diff(scandir($dir), array('.', '..'));
+    foreach ($files as $file) {
+      (is_dir("$dir/$file")) ? rrmdir("$dir/$file") : unlink("$dir/$file");
+    }
+    return rmdir($dir);
   }
 }

@@ -2,7 +2,9 @@
 
 namespace Hasdemir\Base;
 
-class Crud
+use stdClass;
+
+class Crud  extends stdClass
 {
 
   protected $storage = null;
@@ -28,6 +30,12 @@ class Crud
     return $this;
   }
 
+    /**
+     * This static method is used to check the value
+     * @param string $name
+     * @param mixed $value
+     * @return mixed
+     */
   protected function checkValue($name, $value, $object = false)
   {
     return $value;

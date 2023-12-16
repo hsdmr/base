@@ -4,10 +4,31 @@ namespace Hasdemir\Base;
 
 class Log
 {
+  protected static array $context = [];
+  protected static string $message = '';
+  protected static string $status = 'success';
+  protected static array $error = [];
+
   const LOG_DIR = ROOT . DS . 'logs';
+
+  public static function body()
+  {
+    return [
+      'message' => self::$message,
+      'context' => self::$context,
+      'status' => self::$status,
+      'error' => self::$error
+    ];
+  }
+
+  public static function setContext(array $data)
+  {
+    self::$context = $data;
+  }
 
   private static function insert($log, $type, $date = true)
   {
+    if ($_ENV['APP_ENV'] === 'prod' && $type === 'daily') return;
     $log_file = $date ? date('Y-m-d') . ".log" : $type . ".log";
     if (!file_exists(self::LOG_DIR)) {
       mkdir(self::LOG_DIR);
@@ -21,33 +42,41 @@ class Log
     fclose($file);
   }
 
-  public static function daily($job)
+  public static function daily($log)
   {
-    $log = '[' . date('Y-m-d H:i:s') . '] End Job => \'' . ($job['job']) . '\' [=== ' . ($job['code']) . ' ===]' . PHP_EOL;
     self::insert($log, 'daily');
   }
 
   public static function startApp()
   {
-    $log = '-------------------- App Started At => ' . date('Y-m-d H:i:s') .  ' --------------------' . PHP_EOL;
+    $log = '-------------------- App Started At => ' . date('Y-m-d H:i:s') .  ' --------------------/**/' . PHP_EOL;
     self::insert($log, 'daily');
   }
 
   public static function endApp()
   {
     self::sql();
-    $log = '-------------------- App Ended At => ' . date('Y-m-d H:i:s') .  ' ----------------------' . PHP_EOL . '[seperator]' . PHP_EOL;
+    $execute_time = ((hrtime(true) - APP_START) / 1000000);
+    $log = '-------------------- App Ended At => ' . date('Y-m-d H:i:s') .  ' ---------------------- Total Execute Time => ' . $execute_time . ' ms' . PHP_EOL . '[seperator]' . PHP_EOL;
     self::insert($log, 'daily');
   }
 
   public static function request($url, $method)
   {
-    $log = '[' . date('Y-m-d H:i:s') . '] Request url => \'' . $url . '\', method => \'' . $method . '\'' . PHP_EOL;
+    $log = '[' . date('Y-m-d H:i:s') . '] Request url => \'' . $url . '\', method => \'' . $method . '\'/**/' . PHP_EOL;
     self::insert($log, 'daily');
   }
 
   public static function error($response, $e, $th)
   {
+    self::$error = [
+      'message' => $response['message'],
+      'th_message' => $e->getMessage(),
+      'file' => $e->getFile(),
+      'line' => $e->getLine()
+    ];
+    self::$status = 'error';
+
     $log = '[' . date('Y-m-d H:i:s') . '] Throwed error. Message => "' . $response['message'] . '", Status Code => \'' . (isset($e->http_code) ? $e->http_code : 500) . '\'' . PHP_EOL;
     self::insert($log, 'daily');
 
@@ -63,16 +92,16 @@ class Log
 
   private static function sql()
   {
-    $log = '[' . date('Y-m-d H:i:s') . '] SQL_Query => [' . PHP_EOL;
+    $log = '[' . date('Y-m-d H:i:s') . '] SQL Queries => [' . PHP_EOL;
     foreach ($GLOBALS[Codes::SQL_QUERIES] as $item) {
       $log .= '                        Query => \'' . $item[Codes::QUERY] . '\'' . PHP_EOL;
       $log .= '                        Binds => [' . PHP_EOL;
       foreach ($item[Codes::BINDS] as $key => $value) {
-        $log .= '                          \'' . $key . '\' => \'' . $value . '\'' . PHP_EOL;
+        $log .= '                          \'' . $key . '\' => `' . $value . '`' . PHP_EOL;
       }
       $log .= '                        ]' . PHP_EOL;
     }
-    $log .= '                      ]' . PHP_EOL;
+    $log .= '                      ]/**/' . PHP_EOL;
     self::insert($log, 'daily');
   }
 }

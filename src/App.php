@@ -13,7 +13,6 @@ use Throwable;
 
 class App
 {
-  protected array $config;
   protected array $header = [];
   public Response $response;
   public Console $consol;
@@ -52,22 +51,20 @@ class App
     Log::startApp();
     try {
       $this->routeInstance()->run();
-    } catch (UnexpectedValueException $e) {
-      return $this->response->error($e->http_code, $this->header, $e->getMessage(), $e, $e->getPrevious());
-    } catch (NotFoundException $e) {
-      return $this->response->error($e->http_code, $this->header, $e->getMessage(), $e, $e->getPrevious());
-    } catch (StoragePdoException $e) {
-      return $this->response->error($e->http_code, $this->header, $e->getMessage(), $e, $e->getPrevious());
-    } catch (NotImplementException $e) {
-      return $this->response->error($e->http_code, $this->header, $e->getMessage(), $e, $e->getPrevious());
-    } catch (NotAllowedException $e) {
-      return $this->response->error($e->http_code, $this->header, $e->getMessage(), $e, $e->getPrevious());
-    } catch (DefaultException $e) {
-      return $this->response->error($e->http_code, $this->header, $e->getMessage(), $e, $e->getPrevious());
     } catch (Throwable $th) {
-      return $this->response->error(500, $this->header, 'An unknown error has occurred.', $th);
-    } catch (Exception $e) {
-      return $this->response->error(500, $this->header, 'An unknown error has occurred.', $e);
+      $e = $th;
+      $http_code = 500;
+      switch (true) {
+        case $e instanceof UnexpectedValueException:
+        case $e instanceof NotFoundException:
+        case $e instanceof StoragePdoException:
+        case $e instanceof NotImplementException:
+        case $e instanceof NotAllowedException:
+        case $e instanceof DefaultException:
+          $http_code = $e->http_code;
+          break;
+      }
+      return $this->response->error($http_code, $this->header, $e->getMessage(), $e, $e->getPrevious());
     } finally {
       Log::endApp();
     }
@@ -93,6 +90,7 @@ class App
 
   private function defineConfig($config)
   {
+    define('APP_START', hrtime(true));
     define('ROOT', $config['ROOT']);
     define('DS', DIRECTORY_SEPARATOR);
     define('HTTP_OK', 200);

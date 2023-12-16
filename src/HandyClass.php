@@ -5,8 +5,9 @@ namespace Hasdemir\Base;
 use ArrayAccess;
 use Countable;
 use Iterator;
+use stdClass;
 
-abstract class HandyClass implements ArrayAccess, Iterator, Countable
+abstract class HandyClass extends stdClass implements ArrayAccess, Iterator, Countable
 {
 
   protected array $container = [];
@@ -35,7 +36,7 @@ abstract class HandyClass implements ArrayAccess, Iterator, Countable
 
   public function next(): void
   {
-    echo ++$this->position;
+    ++$this->position;
   }
 
   public function valid(): bool
@@ -72,7 +73,7 @@ abstract class HandyClass implements ArrayAccess, Iterator, Countable
 
   public function offsetGet($offset): mixed
   {
-    return isset($this->container[$offset]) ? $this->container[$offset] : '';
+    return isset($this->container[$offset]) ? $this->container[$offset] : null;
   }
 
   public function setContainer($params)
